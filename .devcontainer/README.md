@@ -1,50 +1,55 @@
-# symbiotic-os devcontainer
+# devcontainer — for humans
 
-## Purpose
+## What this is
 
-This devcontainer is the ONLY environment where Codex may run in yolo mode.
+This devcontainer is the ONLY environment where Codex may run in `--yolo` mode.
+It enforces isolation structurally, not by discipline.
 
-## Security properties
+## Security guarantees
 
-- `--network=none`: no external network calls from inside the container
-- `--cap-drop=ALL`: no Linux capability escalation
-- `--security-opt=no-new-privileges`: processes cannot gain new privileges
-- Single workspace mount: Codex can only touch files in `/workspace`
-- Non-root user: runs as `vscode`, not root
+| Control | Value | Why |
+|---|---|---|
+| `--network=none` | No external calls | Prevents data exfiltration |
+| `--cap-drop=ALL` | No privilege escalation | Minimal attack surface |
+| `--no-new-privileges` | Processes stay limited | Defence in depth |
+| Single workspace mount | Codex sees only this repo | Scope enforcement |
+| Non-root user | Runs as `vscode` | No host privilege |
 
-## Runtime options
+## How to use (human)
 
-### Podman (preferred — rootless)
+### Option A: IDE integration (VS Code, Cursor, DevPod)
 
-```bash
-podman build -f Dockerfile.devcontainer -t symbiotic-os-builder .
-podman run --rm -it \
-  --network=none \
-  --cap-drop=ALL \
-  --security-opt=no-new-privileges \
-  -v $(pwd):/workspace:z \
-  -w /workspace \
-  symbiotic-os-builder bash
-```
-
-### Docker (fallback)
+Docker required for native devcontainer tooling support.
 
 ```bash
-docker build -f Dockerfile.devcontainer -t symbiotic-os-builder .
-docker run --rm -it \
-  --network=none \
-  --cap-drop=ALL \
-  --security-opt=no-new-privileges \
-  -v $(pwd):/workspace \
-  -w /workspace \
-  symbiotic-os-builder bash
+# Open repo in IDE → "Reopen in Container"
 ```
 
-### VS Code / Cursor devcontainer extension
+### Option B: Manual with Podman (preferred for sovereignty)
 
-Open the repo, select "Reopen in Container" — uses `devcontainer.json` above.
+```bash
+make build-container          # build the image
+make shell-container          # open a shell inside
+# then inside the container:
+acpx codex exec --yolo -s symbiotic-os-builder "$(cat CODEX_BRIEF.md)"
+```
+
+### Option C: Manual with Docker (fallback)
+
+```bash
+CONTAINER_RUNTIME=docker make build-container
+CONTAINER_RUNTIME=docker make shell-container
+```
 
 ## Invariant
 
-Codex yolo mode outside this container = policy violation.
-Codex in this container = safe by design.
+Codex `--yolo` outside this container = policy violation (see CODEX_POLICY.md).
+Codex `--full-auto` outside this container = permitted.
+
+## What Codex sees inside
+
+Codex reads these files on startup:
+- `AGENTS.md` — role, rules, project context
+- `codex.toml` — approval policy, instructions
+- `CODEX_BRIEF.md` — current task
+- `CODEX_POLICY.md` — governance rules

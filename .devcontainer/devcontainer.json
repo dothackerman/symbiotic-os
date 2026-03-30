@@ -1,6 +1,8 @@
 {
   "name": "symbiotic-os-builder",
-  "image": "mcr.microsoft.com/devcontainers/python:3.12-bookworm",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "runArgs": [
     "--cap-drop=ALL",
     "--security-opt=no-new-privileges",
