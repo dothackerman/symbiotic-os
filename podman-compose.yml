@@ -1,0 +1,69 @@
+---
+# Symbiotic OS v0 — Podman rootless compose
+# Runs two subscriber workers against a shared SQLite volume.
+# No root required.
+
+version: "3.8"
+
+services:
+  subscriber-week:
+    image: python:3.11-slim
+    container_name: symbiosis-subscriber-week
+    restart: unless-stopped
+    working_dir: /app
+    command: >
+      sh -c "pip install --quiet python-dotenv &&
+             python subscribers/week_updater.py"
+    volumes:
+      - .:/app:z
+      - bus-state:/app/state:z
+      - week-md:/openclaw-workspace:z
+    environment:
+      - WEEK_MD_PATH=/openclaw-workspace/WEEK.md
+      - POLL_INTERVAL=2
+    env_file:
+      - secrets/.env
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    network_mode: none
+
+  subscriber-audit:
+    image: python:3.11-slim
+    container_name: symbiosis-subscriber-audit
+    restart: unless-stopped
+    working_dir: /app
+    command: >
+      sh -c "pip install --quiet python-dotenv &&
+             python subscribers/audit_logger.py"
+    volumes:
+      - .:/app:z
+      - bus-state:/app/state:z
+      - heartbeat-state:/openclaw-memory:z
+    environment:
+      - HEARTBEAT_STATE_PATH=/openclaw-memory/heartbeat-state.json
+      - POLL_INTERVAL=2
+    env_file:
+      - secrets/.env
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    network_mode: none
+
+volumes:
+  bus-state:
+    driver: local
+  week-md:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${OPENCLAW_WORKSPACE:-${HOME}/.openclaw/workspace}
+  heartbeat-state:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${OPENCLAW_WORKSPACE:-${HOME}/.openclaw/workspace}/memory
