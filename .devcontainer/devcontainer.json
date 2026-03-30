@@ -1,0 +1,34 @@
+{
+  "name": "symbiotic-os-builder",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12-bookworm",
+  "runArgs": [
+    "--cap-drop=ALL",
+    "--security-opt=no-new-privileges",
+    "--network=none"
+  ],
+  "containerEnv": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONUNBUFFERED": "1"
+  },
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+  ],
+  "workspaceFolder": "/workspace",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "postCreateCommand": "pip install -e '.[dev]' 2>/dev/null || pip install pytest python-dotenv 2>/dev/null || true",
+  "remoteUser": "vscode",
+  "customizations": {
+    "codex": {
+      "approvalMode": "auto-edit",
+      "notes": [
+        "Codex runs in yolo mode ONLY inside this devcontainer.",
+        "Network is disabled (--network=none) — no external calls possible.",
+        "Capabilities dropped — no privilege escalation.",
+        "Workspace is the only writable mount.",
+        "Do NOT run Codex in yolo mode outside this container."
+      ]
+    }
+  }
+}

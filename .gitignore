@@ -1,0 +1,28 @@
+# Runtime state — never commit
+state/
+state/bus.db
+
+# Secrets — never commit
+secrets/bus.key
+secrets/*.key
+secrets/*.pem
+secrets/*.p8
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Container build artifacts
+.devcontainer/.container-id
+
+# OS
+.DS_Store
+Thumbs.db
