@@ -1,7 +1,3 @@
-.PHONY: help build-container shell-container build test up down reset codex-check key-gen
-
-CONTAINER_NAME    = symbiotic-os-builder
-CONTAINER_RUNTIME ?= podman
 COMPOSE_FILE      = podman-compose.yml
 DB_PATH           = state/bus.db
 KEY_PATH          = secrets/bus.key
@@ -15,10 +11,6 @@ help:
 	@echo "  test             Run all tests (pytest)"
 	@echo "  reset            Remove state/bus.db and cursor files (keeps code)"
 	@echo ""
-	@echo "  build-container  Build the devcontainer image"
-	@echo "  shell-container  Open a shell inside the devcontainer"
-	@echo "  codex-check      Verify container is ready before yolo mode"
-
 # ---------------------------------------------------------------------------
 # Key generation (first-time setup)
 # ---------------------------------------------------------------------------
@@ -37,13 +29,7 @@ key-gen:
 # Services
 # ---------------------------------------------------------------------------
 up: _check-key
-	$(CONTAINER_RUNTIME)-compose -f $(COMPOSE_FILE) up -d
-	@echo "Subscribers started."
-
 down:
-	$(CONTAINER_RUNTIME)-compose -f $(COMPOSE_FILE) down || true
-	@echo "Services stopped."
-
 # ---------------------------------------------------------------------------
 # Testing
 # ---------------------------------------------------------------------------
@@ -59,30 +45,6 @@ reset:
 	rm -f state/week_updater_cursor.txt
 	rm -f state/audit_logger_cursor.txt
 	@echo "State cleared. Code and key intact."
-
-# ---------------------------------------------------------------------------
-# Container targets
-# ---------------------------------------------------------------------------
-build-container:
-	$(CONTAINER_RUNTIME) build \
-		-f .devcontainer/Dockerfile \
-		-t $(CONTAINER_NAME) \
-		.devcontainer/
-
-shell-container:
-	$(CONTAINER_RUNTIME) run --rm -it \
-		--network=none \
-		--cap-drop=ALL \
-		--security-opt=no-new-privileges \
-		-v $$(pwd):/workspace:z \
-		-w /workspace \
-		$(CONTAINER_NAME) bash
-
-codex-check:
-	@echo "Checking if devcontainer is available..."
-	@$(CONTAINER_RUNTIME) image inspect $(CONTAINER_NAME) > /dev/null 2>&1 \
-		|| (echo "ERROR: Container image not built. Run 'make build-container' first." && exit 1)
-	@echo "Container image ready. Safe to run Codex yolo inside container."
 
 # ---------------------------------------------------------------------------
 # Internal guards
