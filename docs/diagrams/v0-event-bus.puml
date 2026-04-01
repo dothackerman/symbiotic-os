@@ -1,0 +1,41 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+class BusClient {
+  -db_path: str
+  -secret: str
+  +publish(event: Event): str
+  +consume(after_id: str): List[Event]
+  +verify(event: Event): bool
+}
+
+class Event {
+  +id: str
+  +timestamp: str
+  +actor_type: str
+  +actor_id: str
+  +model_id: str
+  +session_id: str
+  +event_type: str
+  +payload_hash: str
+  +signature: str
+  +payload_json: str
+}
+
+class WeekUpdater {
+  -bus: BusClient
+  -week_md_path: str
+  +run_once(): void
+}
+
+class AuditLogger {
+  -bus: BusClient
+  -heartbeat_path: str
+  +run_once(): void
+}
+
+BusClient ..> Event : produces/consumes
+WeekUpdater --> BusClient : polls
+AuditLogger --> BusClient : polls
+
+@enduml
